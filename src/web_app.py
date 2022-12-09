@@ -1,44 +1,62 @@
 import fastapi
 from model import *
 from Note import Note
-#from main import *
-
-tags_metadata = [
-    {
-        "name": "id"
-    }
-]
 
 api_router = fastapi.APIRouter()
 notes_path = 'notes/'
 
-@api_router.get('/note_info', response_model=NoteInfo)
-def note_info():
-    return NoteInfo(created_at=datetime(2022,2,3), updated_at=datetime(2021,2,2))
+@api_router.get('/{token}/note_info', response_model=NoteInfo)
+def note_info(token, id: int):
+    isntExist = Note.isntExist(id)
+    if not Note.getTokenList().__contains__(str(token)) or isntExist:
+        return NoteInfo(created_at=datetime(1, 1, 1), updated_at=datetime(1, 1, 1))
+    else:
+        note = Note(id)
+        info = note.getNoteInfo()
+        return NoteInfo(created_at=info[1], updated_at=info[2])
 
-@api_router.get('/get_note_text/id={id}', response_model=GetNoteText)
-def get_note_text(id):
-    filename = 'note' + str(id) + '.txt'
-    path = notes_path + filename
-    with open(path,'r') as f:
+@api_router.get('/{token}/get_note_text', response_model=GetNoteText)
+def get_note_text(token: str, id: int):
+    isntExist = Note.isntExist(id)
+    if not Note.getTokenList().__contains__(str(token)) or isntExist:
+        return GetNoteText(id=-1,text='-1')
+    else:
+        note = Note(id)
         response = GetNoteText(
             id=id,
-            text=f.read())
-    return response
-#patch
-@api_router.get('/create_note', response_model=CreateNote,)
-def create_note(id: int):
-    note = Note(id)
-    return CreateNote(id=note.id)
+            text=note.text)
+        return response
 
-#patch
-@api_router.get('/edit_note', response_model=GetNoteText,)
-def edit_note(id: int, text: str):
-    note = Note(id)
-    if text != '':
-        note.editNote(text)
-    return GetNoteText(id=note.id, text=note.text)
+@api_router.post('/{token}/create_note', response_model=CreateNote)
+def create_note(token: str, id: int):
+    if not Note.getTokenList().__contains__(str(token)):
+        return CreateNote(id=-1)
+    else:
+        note = Note(id)
+        return CreateNote(id=note.id)
 
-@api_router.get('/get_note_list', response_model=GetNoteList)
-def get_note_list():
-    return GetNoteList(noteInfo={0: 789, 1: 456, 2: 123})
+@api_router.patch('/{token}/edit_note', response_model=GetNoteText)
+def edit_note(token: str, id: int, text: str):
+    if not Note.getTokenList().__contains__(str(token)):
+        return GetNoteText(id=-1, text='')
+    else:
+        note = Note(id)
+        if text != '':
+            note.editNote(text)
+        return GetNoteText(id=note.id, text=note.text)
+
+@api_router.get('/{token}/get_note_list', response_model=GetNoteList)
+def get_note_list(token: str):
+    if not Note.getTokenList().__contains__(str(token)):
+        return GetNoteList(noteList=[])
+    else:
+        return GetNoteList(noteList=Note.getList())
+
+@api_router.delete('/{token}/delete_note', response_model=CreateNote)
+def delete_note(token: str, id: int):
+    if not Note.getTokenList().__contains__(str(token)):
+        return CreateNote(id=-1)
+    else:
+        note = Note(id)
+        note.deleteNote()
+        return CreateNote(id=id)

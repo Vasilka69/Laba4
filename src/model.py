@@ -15,4 +15,4 @@ class CreateNote(BaseModel):
     id: int
 
 class GetNoteList(BaseModel):
-    notesList: Dict[int, int]
+    noteList: Dict[int, int]
