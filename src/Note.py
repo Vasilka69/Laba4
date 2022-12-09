@@ -45,7 +45,6 @@ class Note:
 
     def saveInfo(self):
         info, i = self.checkInfo()
-        print(f'info: {info}')
         with open(self.notesInfo, 'w') as f:
             if i != -1:
                 i[2] = self.updated_at
@@ -59,7 +58,6 @@ class Note:
         try:
             open(self.notesInfo, 'r').close()
         except FileNotFoundError:
-            print('except!')
             return [], -1
         with open(self.notesInfo, 'r') as f:
             lines = f.read().split('\n')
